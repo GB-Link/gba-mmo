@@ -3,3 +3,4 @@ build/
 *.gba
 *.elf
 *.sav
+!web/data/gba-mmo_mb.gba

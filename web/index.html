@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GBA MMO — GB-Link USB</title>
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <div class="header-row">
+            <h1>GBA MMO</h1>
+            <div class="header-buttons">
+                <button id="btn-theme" class="dark-mode-btn" title="Toggle Dark Mode">🌙</button>
+                <button id="btn-settings" class="dark-mode-btn" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>1. Adapter</h2>
+                <p class="cable-note">GBC link cable required</p>
+            </div>
+            <div class="button-row">
+                <div class="usb-button-group">
+                    <button id="btn-connect">Connect USB</button>
+                    <div class="usb-status-box">
+                        <span id="adapter-status" class="status disconnected">Disconnected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>2. Server &amp; Account</h2>
+            </div>
+            <div class="form-row">
+                <label for="server-url">Server</label>
+                <input type="text" id="server-url" spellcheck="false">
+            </div>
+
+            <div id="account-ready" class="account-panel hidden">
+                <div class="form-row">
+                    <span id="account-status" class="status connected">Character ready</span>
+                    <button id="btn-copy-token" class="btn-small">Copy Token</button>
+                    <button id="btn-forget" class="btn-small">Forget Token</button>
+                    <button id="btn-new-character" class="btn-small" title="Requires a connected adapter">New Character…</button>
+                </div>
+                <p class="account-hint">The token is the only key to this character — keep a copy somewhere safe.</p>
+            </div>
+
+            <div id="account-setup" class="account-panel">
+                <p class="account-hint">No character on this server yet — create one, or paste a token from another device.</p>
+                <div class="form-row">
+                    <input type="text" id="create-name" placeholder="Character name" maxlength="20">
+                    <input type="text" id="create-email" placeholder="Email (optional)" maxlength="60">
+                    <button id="btn-create" class="btn-small" title="Requires a connected adapter">Create Account</button>
+                </div>
+                <div class="form-row">
+                    <input type="text" id="token-input" placeholder="Or paste an existing token" spellcheck="false">
+                    <button id="btn-use-token" class="btn-small">Use Token</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>3. Play</h2>
+            </div>
+            <div class="button-row">
+                <button id="btn-multiboot" disabled>Send Multiboot</button>
+                <button id="btn-already" disabled title="Skip multiboot if the game is already running from this session">Game Already Loaded</button>
+                <button id="btn-start" disabled>Start Game</button>
+                <div class="usb-status-box">
+                    <span id="game-status" class="status disconnected">Idle</span>
+                </div>
+            </div>
+            <div id="stats-line" class="stats-line"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Log</h2>
+            </div>
+            <div id="log-container"></div>
+        </div>
+
+        <div id="browser-warning" class="browser-warning">
+            ⚠️ <strong>Browser Not Supported:</strong> needs WebUSB (Chrome/Edge) or WebSerial (Chrome/Edge/Firefox 151+).
+        </div>
+        <footer class="footer">
+            <p>GBA MMO originally created by <a href="https://github.com/maciel310" target="_blank">maciel310</a> (GPLv3)
+                — GB-Link port: <a href="https://github.com/GB-Link/gba-mmo" target="_blank">Source</a></p>
+            <p>Requires <a href="https://github.com/GB-Link/GBLink-Firmware" target="_blank">GB-Link USB adapter</a></p>
+        </footer>
+    </div>
+
+    <div id="settings-overlay" class="modal-overlay">
+        <div class="modal card">
+            <div class="card-header">
+                <h2>Settings</h2>
+                <button id="btn-settings-close" class="btn-small">✕</button>
+            </div>
+            <div class="form-row">
+                <label for="set-usgap">Word gap (µs)</label>
+                <input type="number" id="set-usgap" min="36" max="50000" step="1">
+            </div>
+            <div class="form-row">
+                <label class="checkbox-label"><input type="checkbox" id="set-idlepoll"> Idle polling</label>
+                <label for="set-idlems">every</label>
+                <input type="number" id="set-idlems" min="10" max="1000" step="10"> ms
+            </div>
+            <p class="cable-note">Word gap: pause after each 32-bit word so the GBA's serial
+                handler keeps up. Raise it if the stats line shows junk words (1000µs matches
+                the original Raspberry Pi client). Idle polling drains button presses between
+                server ticks for snappier input. Changes apply on the next Start.</p>
+        </div>
+    </div>
+
+    <div id="forget-overlay" class="modal-overlay">
+        <div class="modal card">
+            <div class="card-header">
+                <h2>Forget Token?</h2>
+            </div>
+            <p class="modal-text">This removes the token from this browser only. The
+                account stays on the server, but <strong>without its token it cannot be
+                recovered</strong> — if you might want this character back, use
+                <em>Copy Token</em> first.</p>
+            <div class="button-row">
+                <button id="btn-forget-confirm" class="btn-danger">Forget Token</button>
+                <button id="btn-forget-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="create-overlay" class="modal-overlay">
+        <div class="modal card">
+            <div class="card-header">
+                <h2>Replace This Character?</h2>
+            </div>
+            <p class="modal-text">This browser already has a character on this server.
+                Creating a new account (or saving a different token) <strong>replaces the
+                saved token</strong> — if the current one isn't copied somewhere safe, that
+                character becomes unrecoverable. Use <em>Copy Token</em> first to keep it.</p>
+            <div class="button-row">
+                <button id="btn-create-confirm" class="btn-danger">Continue</button>
+                <button id="btn-create-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+    <script src="launcher-return.js"></script>
+</body>
+
+</html>

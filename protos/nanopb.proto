@@ -1,0 +1,3 @@
+// Stub for the `import "nanopb.proto"` in gba-mmo-protos; protobufjs parses
+// the (nanopb).* options without the extension definitions.
+syntax = "proto2";
