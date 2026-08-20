@@ -29,7 +29,7 @@ const MAX_UP_WORDS = 8;
 // 7-word PlayerStatus, with slack; still a single USB batch.
 const IDLE_POLL_WORDS = 12;
 
-const QUEUE_WARN = 5;
+const QUEUE_WARN = 20;
 const QUEUE_STOP = 50;
 
 export class BridgeError extends Error {
